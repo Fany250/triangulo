@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sierpinski Triangle</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: black; /* Fondo negro */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        canvas {
+            border: 1px solid white; /* Opcional: borde en el canvas */
+            margin-bottom: 20px; /* Espacio entre el canvas y el botón */
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007BFF; /* Color de fondo */
+            border: none;
+            border-radius: 5px; /* Bordes redondeados */
+            cursor: pointer;
+            transition: background-color 0.3s; /* Transición suave */
+        }
+        button:hover {
+            background-color: #0056b3; /* Color de fondo al pasar el mouse */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <button onclick="downloadCanvasContents()">Guardar Triangulo Genrado </button>
+
+    <script>
+        const c = document.getElementById('canvas');
+        const ctx = c.getContext('2d');
+
+        const resizeCanvas = () => {
+            c.width = window.innerWidth;
+            c.height = window.innerHeight;
+            startSierpinski(); // Inicializa el triángulo al redimensionar
+        };
+
+        const createTriangle = (pos, sidelen, color) => {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(...pos);
+            ctx.lineTo(pos[0] + sidelen / 2, pos[1] - sidelen * Math.sin(Math.PI / 3));
+            ctx.lineTo(pos[0] + sidelen, pos[1]);
+            ctx.lineTo(...pos);
+            ctx.closePath();
+            ctx.fill();
+        };
+
+        const getRandomColor = () => {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        };
+
+        const createSierpinskiTriangle = (pos, sidelen, depth) => {
+            if (depth === 0) {
+                createTriangle(pos, sidelen, getRandomColor());
+            } else {
+                const innerTriangleSidelen = sidelen / 2;
+                const innerTrianglesPositions = [
+                    pos,
+                    [pos[0] + innerTriangleSidelen, pos[1]],
+                    [pos[0] + innerTriangleSidelen / 2, pos[1] - Math.sin(Math.PI / 3) * innerTriangleSidelen],
+                ];
+                innerTrianglesPositions.forEach(trianglePosition => {
+                    createSierpinskiTriangle(trianglePosition, innerTriangleSidelen, depth - 1);
+                });
+            }
+        };
+
+        const drawSierpinski = (depth) => {
+            ctx.clearRect(0, 0, c.width, c.height); // Limpiar el canvas
+            createSierpinskiTriangle([c.width / 2 - (c.height * Math.sqrt(3)) / 4, c.height], c.height * Math.sqrt(3) / 2, depth);
+        };
+
+        const startSierpinski = () => {
+            let currentDepth = 0;
+            const maxDepth = 5;
+
+            const dissolve = () => {
+                if (currentDepth > maxDepth) {
+                    currentDepth = 0; // Reinicia el ciclo
+                }
+
+                // Efecto de desvanecimiento
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; // Color negro con un poco de transparencia
+                ctx.fillRect(0, 0, c.width, c.height); // Cubrir el canvas
+
+                // Dibujar el triángulo Sierpinski
+                drawSierpinski(maxDepth - currentDepth);
+                currentDepth++;
+
+                setTimeout(dissolve, 1500); // Tiempo entre pasos
+            };
+
+            dissolve(); // Comienza el ciclo
+        };
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas(); // Configuración inicial
+
+        const downloadCanvasContents = () => {
+            const link = document.createElement('a');
+            link.download = 'Sierpinski Triangle.png';
+            link.href = c.toDataURL();
+            link.click();
+        };
+    </script>
+</body>
+</html>
